@@ -46,14 +46,26 @@ def classify():
         
         if response.status_code == 200:
             result = response.json()
-            predicted_label = result['predicted_class']
-            confidence = result['confidence']
+            print("API Response:", result)  # Log the entire response
+            
+            predicted_label = result.get('predicted_class', 'Unknown')
+            confidence = result.get('confidence', None)
+            
+            # Check if confidence is a valid number
+            if confidence is not None:
+                try:
+                    confidence = float(confidence)
+                except ValueError:
+                    print(f"Invalid confidence value: {confidence}")
+                    confidence = None
             
             return jsonify({
                 "predicted_class": predicted_label,
                 "confidence": confidence
             }), 200
         else:
+            print(f"API request failed with status code: {response.status_code}")
+            print("Response content:", response.text)
             return jsonify({"error": "API request failed"}), response.status_code
     
     except Exception as e:
