@@ -4,7 +4,7 @@ import requests
 import base64
 
 app = Flask(__name__)
-FASTAPI_URL = "http://your-fastapi-url/predict" 
+FASTAPI_URL = "https://chris2002-ml-app.hf.space/predict" 
 @app.route('/')
 def index():
     return render_template('index.html')
