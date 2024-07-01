@@ -1,21 +1,15 @@
 import os
-
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
-
 from flask import Flask, request, jsonify, render_template, send_from_directory
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.image import img_to_array
 from PIL import Image
 import numpy as np
 import os
 import uuid
-import tensorflow as tf
+import requests
+from io import BytesIO
 
 app = Flask(__name__)
-
-# Load the trained model
-model = load_model('Custom_layer.keras', custom_objects={'Precision': tf.keras.metrics.Precision, 'Recall': tf.keras.metrics.Recall})
 
 # Configure upload folder
 UPLOAD_FOLDER = 'uploads'
@@ -23,19 +17,10 @@ if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-
-def prepare_image(image, target_size):
-    if image.mode != "RGB":
-        image = image.convert("RGB")
-    image = image.resize(target_size)
-    image = img_to_array(image)
-    image = np.expand_dims(image, axis=0)
-    image = image / 255.0  # Normalize the image
-    return image
-
 @app.route('/')
 def index():
     return render_template('index.html')
+
 @app.route('/predict')
 def predict():
     return render_template('predict.html')
@@ -65,21 +50,25 @@ def classify():
         filename = request.json['filename']
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         
-        image = Image.open(filepath)
-        processed_image = prepare_image(image, target_size=(224, 224))  # Adjust target size to the correct dimensions
-  # Adjusted target size
+        # Read the image file
+        with open(filepath, 'rb') as file:
+            image_data = file.read()
         
-        predictions = model.predict(processed_image)
-        predicted_class = np.argmax(predictions, axis=1)[0]
-        confidence = round(100 * (np.max(predictions[0])), 2)
+        # Make API request to the specified endpoint
+        api_url = "https://chris2002-ml-app.hf.space/predict"
+        response = requests.post(api_url, files={'file': ('image.jpg', image_data, 'image/jpeg')})
         
-        class_labels = ['Healthy', 'Leaf Rust', 'Leaf Spot']  # Adjust based on your model
-        predicted_label = class_labels[predicted_class]
-        
-        return jsonify({
-            "predicted_class": predicted_label,
-            "confidence": confidence
-        }), 200
+        if response.status_code == 200:
+            result = response.json()
+            predicted_label = result['predicted_class']
+            confidence = result['confidence']
+            
+            return jsonify({
+                "predicted_class": predicted_label,
+                "confidence": confidence
+            }), 200
+        else:
+            return jsonify({"error": "API request failed"}), response.status_code
     
     except Exception as e:
         print(f"Error processing image: {str(e)}")
