@@ -1,21 +1,10 @@
 import os
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
-from flask import Flask, request, jsonify, render_template, send_from_directory
-from PIL import Image
-import numpy as np
-import os
-import uuid
+from flask import Flask, request, jsonify, render_template
 import requests
 from io import BytesIO
+import base64
 
 app = Flask(__name__)
-
-# Configure upload folder
-UPLOAD_FOLDER = 'uploads'
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route('/')
 def index():
@@ -34,29 +23,27 @@ def upload_file():
         if file.filename == '':
             return jsonify({'error': 'No selected file'}), 400
         
-        filename = str(uuid.uuid4()) + os.path.splitext(file.filename)[1]
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
+        # Read file into memory
+        file_content = file.read()
         
-        return jsonify({'filename': filename}), 200
+        # Encode file content as base64
+        file_content_b64 = base64.b64encode(file_content).decode('utf-8')
+        
+        return jsonify({'file_content': file_content_b64}), 200
     
     except Exception as e:
-        print(f"Error uploading file: {str(e)}")
+        print(f"Error handling file: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/classify', methods=['POST'])
 def classify():
     try:
-        filename = request.json['filename']
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        
-        # Read the image file
-        with open(filepath, 'rb') as file:
-            image_data = file.read()
+        file_content_b64 = request.json['file_content']
+        file_content = base64.b64decode(file_content_b64)
         
         # Make API request to the specified endpoint
         api_url = "https://chris2002-ml-app.hf.space/predict"
-        response = requests.post(api_url, files={'file': ('image.jpg', image_data, 'image/jpeg')})
+        response = requests.post(api_url, files={'file': ('image.jpg', file_content, 'image/jpeg')})
         
         if response.status_code == 200:
             result = response.json()
@@ -73,10 +60,6 @@ def classify():
     except Exception as e:
         print(f"Error processing image: {str(e)}")
         return jsonify({"error": str(e)}), 400
-
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == '__main__':
     app.run(debug=True)
