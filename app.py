@@ -1,7 +1,6 @@
 import os
 from flask import Flask, request, jsonify, render_template
 import requests
-from io import BytesIO
 import base64
 
 app = Flask(__name__)
@@ -9,10 +8,6 @@ app = Flask(__name__)
 @app.route('/')
 def index():
     return render_template('index.html')
-
-@app.route('/predict')
-def predict():
-    return render_template('predict.html')
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
