@@ -9,6 +9,10 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
+@app.route('/predict')
+def predict():
+    return render_template('predict.html')
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     try:
@@ -55,6 +59,11 @@ def classify():
     except Exception as e:
         print(f"Error processing image: {str(e)}")
         return jsonify({"error": str(e)}), 400
+
+# Add routes for static files if needed
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    return send_from_directory('static', filename)
 
 if __name__ == '__main__':
     app.run(debug=True)
