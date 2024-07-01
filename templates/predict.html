@@ -250,57 +250,57 @@
             displayImage(selectedFile);
         });
 
-        sendImageBtn.addEventListener('click', async () => {
-            if (selectedFile) {
-                resultContainer.classList.add('hidden');
-                loadingText.classList.remove('hidden');
-                document.getElementById('resultContent').classList.add('hidden');
+sendImageBtn.addEventListener('click', async () => {
+    if (selectedFile) {
+        resultContainer.classList.add('hidden');
+        loadingText.classList.remove('hidden');
+        document.getElementById('resultContent').classList.add('hidden');
 
-                try {
-                    const formData = new FormData();
-                    formData.append('file', selectedFile);
+        try {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
 
-                    const response = await fetch('/upload', {
-                        method: 'POST',
-                        body: formData
-                    });
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
 
-                    const data = await response.json();
-                    
-                    if (data.file_content) {
-                        imageData = data.file_content;
+            const data = await response.json();
+            
+            if (data.file_content) {
+                imageData = data.file_content;
 
-                        const classifyResponse = await fetch('/classify', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ file_content: imageData })
-                        });
+                const classifyResponse = await fetch('/classify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ file_content: imageData })
+                });
 
-                        const classifyData = await classifyResponse.json();
-                        console.log('Classification result:', classifyData);
+                const classifyData = await classifyResponse.json();
+                console.log('Classification result:', classifyData);
 
-                        const { predicted_class, confidence } = classifyData;
+                const { predicted_class, confidence } = classifyData;
 
-                        predictedClassSpan.textContent = predicted_class;
-                        confidenceSpan.textContent = (confidence * 100).toFixed(2) + '%';
+                predictedClassSpan.textContent = predicted_class || 'Unknown';
+                confidenceSpan.textContent = confidence || 'N/A';
 
-                        resultContainer.classList.remove('hidden');
-                        loadingText.classList.add('hidden');
-                        document.getElementById('resultContent').classList.remove('hidden');
-                    } else {
-                        alert('Error uploading file. Please try again.');
-                    }
-                } catch (error) {
-                    console.error('Error classifying image:', error);
-                    alert('Error classifying image. Please try again.');
-                    resultContainer.classList.add('hidden');
-                }
+                resultContainer.classList.remove('hidden');
+                loadingText.classList.add('hidden');
+                document.getElementById('resultContent').classList.remove('hidden');
             } else {
-                alert('Please select an image first.');
+                alert('Error uploading file. Please try again.');
             }
-        });
+        } catch (error) {
+            console.error('Error classifying image:', error);
+            alert('Error classifying image. Please try again.');
+            resultContainer.classList.add('hidden');
+        }
+    } else {
+        alert('Please select an image first.');
+    }
+});
 
         resetImageBtn.addEventListener('click', () => {
             selectedFile = null;
