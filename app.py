@@ -4,7 +4,7 @@ import requests
 import base64
 
 app = Flask(__name__)
-
+FASTAPI_URL = "http://your-fastapi-url/predict" 
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -41,8 +41,9 @@ def classify():
         file_content = base64.b64decode(file_content_b64)
         
         # Make API request to your FastAPI endpoint
-        api_url = "http://your-fastapi-url/predict"  # Replace with your actual FastAPI URL
+        api_url = f"{FASTAPI_URL}/predict"
         files = {'file': ('image.jpg', file_content, 'image/jpeg')}
+        
         response = requests.post(api_url, files=files)
         
         if response.status_code == 200:
@@ -61,6 +62,9 @@ def classify():
             print("Response content:", response.text)
             return jsonify({"error": "API request failed"}), response.status_code
     
+    except requests.exceptions.RequestException as e:
+        print(f"Error connecting to FastAPI: {str(e)}")
+        return jsonify({"error": "Failed to connect to classification service"}), 503
     except Exception as e:
         print(f"Error processing image: {str(e)}")
         return jsonify({"error": str(e)}), 400
