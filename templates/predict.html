@@ -279,10 +279,12 @@
                         });
 
                         const classifyData = await classifyResponse.json();
+                        console.log('Classification result:', classifyData);
+
                         const { predicted_class, confidence } = classifyData;
 
                         predictedClassSpan.textContent = predicted_class;
-                        confidenceSpan.textContent = confidence.toFixed(2) + '%';
+                        confidenceSpan.textContent = (confidence * 100).toFixed(2) + '%';
 
                         resultContainer.classList.remove('hidden');
                         loadingText.classList.add('hidden');
@@ -313,10 +315,10 @@
         });
     </script>
 
-    <script src="../static/js/main.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <a href="#" class="scrollup" id="scroll-up"> 
         <i class="ri-arrow-up-fill scrollup__icon"></i>
     </a>
-    <script src="../static/js/scrollreveal.min.js"></script>
+    <script src="{{ url_for('static', filename='js/scrollreveal.min.js') }}"></script>
 </body>
 </html>
