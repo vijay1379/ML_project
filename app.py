@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory
 import requests
 import base64
 
@@ -40,27 +40,20 @@ def classify():
         file_content_b64 = request.json['file_content']
         file_content = base64.b64decode(file_content_b64)
         
-        # Make API request to the specified endpoint
-        api_url = "https://chris2002-ml-app.hf.space/predict"
-        response = requests.post(api_url, files={'file': ('image.jpg', file_content, 'image/jpeg')})
+        # Make API request to your FastAPI endpoint
+        api_url = "http://your-fastapi-url/predict"  # Replace with your actual FastAPI URL
+        files = {'file': ('image.jpg', file_content, 'image/jpeg')}
+        response = requests.post(api_url, files=files)
         
         if response.status_code == 200:
             result = response.json()
             print("API Response:", result)  # Log the entire response
             
-            predicted_label = result.get('predicted_class', 'Unknown')
-            confidence = result.get('confidence', None)
-            
-            # Check if confidence is a valid number
-            if confidence is not None:
-                try:
-                    confidence = float(confidence)
-                except ValueError:
-                    print(f"Invalid confidence value: {confidence}")
-                    confidence = None
+            predicted_class = result.get('predicted_class', 'Unknown')
+            confidence = result.get('confidence', 'N/A')
             
             return jsonify({
-                "predicted_class": predicted_label,
+                "predicted_class": predicted_class,
                 "confidence": confidence
             }), 200
         else:
@@ -72,7 +65,6 @@ def classify():
         print(f"Error processing image: {str(e)}")
         return jsonify({"error": str(e)}), 400
 
-# Add routes for static files if needed
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     return send_from_directory('static', filename)
