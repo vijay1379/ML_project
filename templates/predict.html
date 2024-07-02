@@ -210,7 +210,6 @@
         const confidenceSpan = document.getElementById('confidence');
         const loadingText = document.getElementById('loadingText');
         let selectedFile = null;
-        let imageData = null;
 
         function displayImage(file) {
             const reader = new FileReader();
@@ -250,57 +249,61 @@
             displayImage(selectedFile);
         });
 
-sendImageBtn.addEventListener('click', async () => {
-    if (selectedFile) {
-        resultContainer.classList.add('hidden');
-        loadingText.classList.remove('hidden');
-        document.getElementById('resultContent').classList.add('hidden');
+        sendImageBtn.addEventListener('click', async () => {
+            if (selectedFile) {
+                resultContainer.classList.add('hidden');
+                loadingText.classList.remove('hidden');
+                document.getElementById('resultContent').classList.add('hidden');
 
-        try {
-            const formData = new FormData();
-            formData.append('file', selectedFile);
+                try {
+                    const formData = new FormData();
+                    formData.append('file', selectedFile);
 
-            const response = await fetch('/upload', {
-                method: 'POST',
-                body: formData
-            });
+                    const response = await fetch('/classify', {
+                        method: 'POST',
+                        body: formData
+                    });
 
-            const data = await response.json();
-            
-            if (data.file_content) {
-                imageData = data.file_content;
+                    const classifyData = await response.json();
+                    console.log('Classification result:', classifyData);
 
-                const classifyResponse = await fetch('/classify', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ file_content: imageData })
-                });
+                    const { predicted_class, confidence } = classifyData;
 
-                const classifyData = await classifyResponse.json();
-                console.log('Classification result:', classifyData);
+                    predictedClassSpan.textContent = predicted_class || 'Unknown';
+                    confidenceSpan.textContent = confidence || 'N/A';
 
-                const { predicted_class, confidence } = classifyData;
-
-                predictedClassSpan.textContent = predicted_class || 'Unknown';
-                confidenceSpan.textContent = confidence || 'N/A';
-
-                resultContainer.classList.remove('hidden');
-                loadingText.classList.add('hidden');
-                document.getElementById('resultContent').classList.remove('hidden');
+                    resultContainer.classList.remove('hidden');
+                    loadingText.classList.add('hidden');
+                    document.getElementById('resultContent').classList.remove('hidden');
+                } catch (error) {
+                    console.error('Error classifying image:', error);
+                    alert('Error classifying image. Please try again.');
+                    resultContainer.classList.add('hidden');
+                }
             } else {
-                alert('Error uploading file. Please try again.');
+                alert('Please select an image first.');
             }
-        } catch (error) {
-            console.error('Error classifying image:', error);
-            alert('Error classifying image. Please try again.');
+        });
+
+        resetImageBtn.addEventListener('click', () => {
+            selectedFile = null;
+            loadedImageName.textContent = 'None';
+            loadedImageText.classList.add('hidden');
+            imageContainer.innerHTML = '';
             resultContainer.classList.add('hidden');
-        }
-    } else {
-        alert('Please select an image first.');
-    }
-});
+            dropzone.classList.remove('hidden');
+            loadingText.classList.add('hidden');
+            document.getElementById('resultContent').classList.add('hidden');
+        });
+    </script>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <a href="#" class="scrollup" id="scroll-up"> 
+        <i class="ri-arrow-up-fill scrollup__icon"></i>
+    </a>
+    <script src="{{ url_for('static', filename='js/scrollreveal.min.js') }}"></script>
+</body>
+</html>
 
         resetImageBtn.addEventListener('click', () => {
             selectedFile = null;
