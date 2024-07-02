@@ -214,109 +214,105 @@
         </section>
     </main>
 
-<script>
-    const imageContainer = document.getElementById('imageContainer');
-    const dropzone = document.getElementById('dropzone');
-    const loadedImageText = document.getElementById('loaded-image-text');
-    const loadedImageName = document.getElementById('loaded-image-name');
-    const sendImageBtn = document.getElementById('sendImageBtn');
-    const resetImageBtn = document.getElementById('resetImageBtn');
-    const resultContainer = document.getElementById('resultContainer');
-    const predictedClassSpan = document.getElementById('predictedClass');
-    const confidenceSpan = document.getElementById('confidence');
-    const loadingText = document.getElementById('loadingText');
-    const loader = document.getElementById('loader');
-    let selectedFile = null;
+    <script>
+        const imageContainer = document.getElementById('imageContainer');
+        const dropzone = document.getElementById('dropzone');
+        const loadedImageText = document.getElementById('loaded-image-text');
+        const loadedImageName = document.getElementById('loaded-image-name');
+        const sendImageBtn = document.getElementById('sendImageBtn');
+        const resetImageBtn = document.getElementById('resetImageBtn');
+        const resultContainer = document.getElementById('resultContainer');
+        const predictedClassSpan = document.getElementById('predictedClass');
+        const confidenceSpan = document.getElementById('confidence');
+        const loadingText = document.getElementById('loadingText');
+        let selectedFile = null;
 
-    function displayImage(file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            imageContainer.innerHTML = `<img src="${e.target.result}" alt="Selected Image">`;
-            loadedImageName.textContent = file.name;
-            loadedImageText.classList.remove('hidden');
-            dropzone.classList.add('hidden');
-        };
-        reader.readAsDataURL(file);
-    }
-
-    dropzone.addEventListener('click', () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.onchange = (e) => {
-            selectedFile = e.target.files[0];
-            displayImage(selectedFile);
-        };
-        input.click();
-    });
-
-    dropzone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropzone.style.borderColor = 'var(--first-color-alt)';
-    });
-
-    dropzone.addEventListener('dragleave', () => {
-        dropzone.style.borderColor = 'var(--first-color)';
-    });
-
-    dropzone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropzone.style.borderColor = 'var(--first-color)';
-        selectedFile = e.dataTransfer.files[0];
-        displayImage(selectedFile);
-    });
-
-    sendImageBtn.addEventListener('click', async () => {
-        if (selectedFile) {
-            resultContainer.classList.add('hidden');
-            loadingText.classList.remove('hidden');
-            document.getElementById('resultContent').classList.add('hidden');
-            loader.style.display = 'block';  // Show the loader
-
-            try {
-                const formData = new FormData();
-                formData.append('file', selectedFile);
-
-                const response = await fetch('/classify', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const classifyData = await response.json();
-                console.log('Classification result:', classifyData);
-
-                const { predicted_class, confidence } = classifyData;
-
-                predictedClassSpan.textContent = predicted_class || 'Unknown';
-                confidenceSpan.textContent = confidence || 'N/A';
-
-                resultContainer.classList.remove('hidden');
-                loadingText.classList.add('hidden');
-                document.getElementById('resultContent').classList.remove('hidden');
-            } catch (error) {
-                console.error('Error classifying image:', error);
-                alert('Error classifying image. Please try again.');
-                resultContainer.classList.add('hidden');
-            } finally {
-                loader.style.display = 'none';  // Hide the loader
-            }
-        } else {
-            alert('Please select an image first.');
+        function displayImage(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imageContainer.innerHTML = `<img src="${e.target.result}" alt="Selected Image">`;
+                loadedImageName.textContent = file.name;
+                loadedImageText.classList.remove('hidden');
+                dropzone.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
         }
-    });
 
-    resetImageBtn.addEventListener('click', () => {
-        selectedFile = null;
-        loadedImageName.textContent = 'None';
-        loadedImageText.classList.add('hidden');
-        imageContainer.innerHTML = '';
-        resultContainer.classList.add('hidden');
-        dropzone.classList.remove('hidden');
-        loadingText.classList.add('hidden');
-        document.getElementById('resultContent').classList.add('hidden');
-        loader.style.display = 'none';  // Ensure loader is hidden on reset
-    });
-</script>
+        dropzone.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = (e) => {
+                selectedFile = e.target.files[0];
+                displayImage(selectedFile);
+            };
+            input.click();
+        });
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.style.borderColor = 'var(--first-color-alt)';
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.style.borderColor = 'var(--first-color)';
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.style.borderColor = 'var(--first-color)';
+            selectedFile = e.dataTransfer.files[0];
+            displayImage(selectedFile);
+        });
+
+        sendImageBtn.addEventListener('click', async () => {
+            if (selectedFile) {
+                resultContainer.classList.add('hidden');
+                loadingText.classList.remove('hidden');
+                document.getElementById('resultContent').classList.add('hidden');
+
+                try {
+                    const formData = new FormData();
+                    formData.append('file', selectedFile);
+
+                    const response = await fetch('/classify', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const classifyData = await response.json();
+                    console.log('Classification result:', classifyData);
+
+                    const { predicted_class, confidence } = classifyData;
+
+                    predictedClassSpan.textContent = predicted_class || 'Unknown';
+                    confidenceSpan.textContent = confidence || 'N/A';
+
+                    resultContainer.classList.remove('hidden');
+                    loadingText.classList.add('hidden');
+                    document.getElementById('resultContent').classList.remove('hidden');
+                } catch (error) {
+                    console.error('Error classifying image:', error);
+                    alert('Error classifying image. Please try again.');
+                    resultContainer.classList.add('hidden');
+                }
+            } else {
+                alert('Please select an image first.');
+            }
+        });
+
+        resetImageBtn.addEventListener('click', () => {
+            selectedFile = null;
+            loadedImageName.textContent = 'None';
+            loadedImageText.classList.add('hidden');
+            imageContainer.innerHTML = '';
+            resultContainer.classList.add('hidden');
+            dropzone.classList.remove('hidden');
+            loadingText.classList.add('hidden');
+            document.getElementById('resultContent').classList.add('hidden');
+        });
+    </script>
+
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <a href="#" class="scrollup" id="scroll-up"> 
         <i class="ri-arrow-up-fill scrollup__icon"></i>
